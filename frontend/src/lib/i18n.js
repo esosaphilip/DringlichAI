@@ -1,0 +1,236 @@
+// UI copy for the German / English toggle, taken from the design reference.
+
+const en = {
+  dept: 'Emergency Dept. · Triage Desk 2',
+  role: 'Triage nurse',
+  navWork: 'Workspace',
+  navQueue: 'Live queue',
+  navDoctors: 'Doctor workload',
+  overloadHint: 'A doctor is at capacity',
+  capTitle: 'Department capacity',
+  live: 'Live',
+  newPatient: 'New patient',
+  close: 'Close',
+
+  qTitle: 'Live triage queue',
+  qSub: 'Sorted by clinical priority, then arrival time',
+  dTitle: 'Doctor workload',
+  dSub: 'Status, live load and assigned patients per doctor',
+
+  kWaiting: 'Patients waiting',
+  kCritical: 'Critical (P1–P2)',
+  kOverdue: 'Over target wait',
+  kDoctors: 'Doctors available',
+  kLoad: 'Avg. load per doctor',
+
+  sAvailable: 'Available',
+  sBreak: 'On break',
+  sOff: 'Off duty',
+
+  search: 'Search patient or ticket',
+  filter: 'Filter by priority',
+  all: 'All',
+
+  thP: 'Priority',
+  thPatient: 'Patient',
+  thSym: 'Symptoms',
+  thDoc: 'Assigned doctor',
+  thWait: 'Waiting',
+  thAct: 'Action',
+  thLoad: 'Active load',
+
+  treated: 'Treated',
+  empty: 'No patients match. Approved patients appear here.',
+  newTag: 'New',
+  overTarget: 'Over target',
+
+  aiConf: 'AI',
+  nurseOk: 'nurse-approved',
+  min: 'min',
+
+  noPatients: 'No assigned patients',
+  stAvailable: 'Available',
+  stBreak: 'On break',
+  stOff: 'Off duty',
+  setBreak: 'Start break',
+  endBreak: 'End break',
+  setOff: 'Set off duty',
+  setOn: 'Back on duty',
+
+  addTitle: 'Add doctor to staff',
+  lDocName: 'Name',
+  lSpec: 'Specialty',
+  phSpec: 'e.g. Neurology',
+  addCta: 'Add doctor',
+
+  intakeTitle: 'New patient',
+  loadingTitle: 'AI triage',
+  reviewTitle: 'Nurse approval',
+  stepForm: 'Details',
+  stepAi: 'AI triage',
+  stepApprove: 'Approve',
+
+  lName: 'Patient name',
+  lSym: 'Sickness / symptoms',
+  lTime: 'Arrival / appointment',
+  phName: 'e.g. Jana Krüger',
+  phSym: 'Main complaint, onset, vital signs…',
+  quick: 'Quick symptoms',
+  now: 'Now',
+  hitlNote: 'The AI only suggests a priority. Nothing enters the queue until you approve it.',
+  submit: 'Run AI triage',
+  formError: 'Please enter a name and symptoms.',
+
+  mLoadingTitle: 'Analysing symptoms',
+  mLoadingSub: 'Checking against clinical guidelines…',
+  step1: 'Retrieving guideline passages',
+  step2: 'Scoring clinical urgency',
+  step3: 'Balancing doctor workload',
+
+  mSuggested: 'AI-suggested priority',
+  mConf: 'confidence',
+  mWhy: 'Why this priority',
+  mSource: 'Matched guideline',
+  mDoc: 'Auto-assigned doctor',
+  mDocNote: 'Lowest load',
+  mOverride: 'Adjust priority if needed',
+  overrideNote: 'You changed the AI suggestion. This is logged with your name.',
+
+  approve: 'Approve & queue',
+  reject: 'Reject',
+  undo: 'Undo',
+
+  patient: 'patient',
+  patients: 'patients',
+  queuedAs: 'queued as',
+  with: 'with',
+  rejected: 'Triage rejected. Patient not queued.',
+  treatedMsg: 'marked as treated',
+  reassigned: 'patients reassigned',
+  capText: ' of capacity in use',
+  backendError: 'Could not reach the backend.',
+
+  chips: ['Chest pain', 'Shortness of breath', 'Headache', 'Fever', 'Fall / injury', 'Wound'],
+  target: [5, 10, 30, 90, 120],
+  labels: ['Immediate', 'Very urgent', 'Urgent', 'Standard', 'Non-urgent']
+}
+
+const de = {
+  dept: 'Notaufnahme · Triage-Platz 2',
+  role: 'Triage-Pflegekraft',
+  navWork: 'Arbeitsbereich',
+  navQueue: 'Live-Warteliste',
+  navDoctors: 'Ärztliche Auslastung',
+  overloadHint: 'Ein Arzt ist voll ausgelastet',
+  capTitle: 'Kapazität der Abteilung',
+  live: 'Live',
+  newPatient: 'Neuer Patient',
+  close: 'Schließen',
+
+  qTitle: 'Live-Triage-Warteliste',
+  qSub: 'Sortiert nach Dringlichkeit, dann nach Ankunft',
+  dTitle: 'Ärztliche Auslastung',
+  dSub: 'Status, Auslastung und zugewiesene Patienten je Arzt',
+
+  kWaiting: 'Wartende Patienten',
+  kCritical: 'Kritisch (P1–P2)',
+  kOverdue: 'Über Zielwartezeit',
+  kDoctors: 'Verfügbare Ärzte',
+  kLoad: 'Ø Auslastung je Arzt',
+
+  sAvailable: 'Verfügbar',
+  sBreak: 'In Pause',
+  sOff: 'Nicht im Dienst',
+
+  search: 'Patient oder Ticket suchen',
+  filter: 'Nach Priorität filtern',
+  all: 'Alle',
+
+  thP: 'Priorität',
+  thPatient: 'Patient',
+  thSym: 'Symptome',
+  thDoc: 'Zugewiesener Arzt',
+  thWait: 'Wartezeit',
+  thAct: 'Aktion',
+  thLoad: 'Auslastung',
+
+  treated: 'Behandelt',
+  empty: 'Keine Treffer. Bestätigte Patienten erscheinen hier.',
+  newTag: 'Neu',
+  overTarget: 'Über Zielzeit',
+
+  aiConf: 'KI',
+  nurseOk: 'von Pflege bestätigt',
+  min: 'Min.',
+
+  noPatients: 'Keine zugewiesenen Patienten',
+  stAvailable: 'Verfügbar',
+  stBreak: 'In Pause',
+  stOff: 'Nicht im Dienst',
+  setBreak: 'Pause starten',
+  endBreak: 'Pause beenden',
+  setOff: 'Dienst beenden',
+  setOn: 'Wieder im Dienst',
+
+  addTitle: 'Arzt hinzufügen',
+  lDocName: 'Name',
+  lSpec: 'Fachrichtung',
+  phSpec: 'z. B. Neurologie',
+  addCta: 'Arzt hinzufügen',
+
+  intakeTitle: 'Neuer Patient',
+  loadingTitle: 'KI-Triage',
+  reviewTitle: 'Bestätigung durch Pflege',
+  stepForm: 'Angaben',
+  stepAi: 'KI-Triage',
+  stepApprove: 'Bestätigen',
+
+  lName: 'Name des Patienten',
+  lSym: 'Beschwerden / Symptome',
+  lTime: 'Ankunft / Termin',
+  phName: 'z. B. Jana Krüger',
+  phSym: 'Leitsymptom, Beginn, Vitalwerte…',
+  quick: 'Schnellauswahl',
+  now: 'Jetzt',
+  hitlNote:
+    'Die KI schlägt nur eine Priorität vor. Erst nach Ihrer Bestätigung wird der Patient eingereiht.',
+  submit: 'KI-Triage starten',
+  formError: 'Bitte Name und Symptome eingeben.',
+
+  mLoadingTitle: 'Symptome werden analysiert',
+  mLoadingSub: 'Abgleich mit klinischen Leitlinien…',
+  step1: 'Leitlinienpassagen werden abgerufen',
+  step2: 'Dringlichkeit wird bewertet',
+  step3: 'Auslastung wird ausgeglichen',
+
+  mSuggested: 'KI-Vorschlag',
+  mConf: 'Konfidenz',
+  mWhy: 'Begründung',
+  mSource: 'Passende Leitlinie',
+  mDoc: 'Automatisch zugewiesen',
+  mDocNote: 'Geringste Auslastung',
+  mOverride: 'Priorität bei Bedarf anpassen',
+  overrideNote: 'Sie haben den KI-Vorschlag geändert. Dies wird mit Ihrem Namen protokolliert.',
+
+  approve: 'Bestätigen & einreihen',
+  reject: 'Ablehnen',
+  undo: 'Rückgängig',
+
+  patient: 'Patient',
+  patients: 'Patienten',
+  queuedAs: 'eingereiht als',
+  with: 'bei',
+  rejected: 'Triage abgelehnt. Patient nicht eingereiht.',
+  treatedMsg: 'als behandelt markiert',
+  reassigned: 'Patienten neu zugewiesen',
+  capText: ' der Kapazität belegt',
+  backendError: 'Backend nicht erreichbar.',
+
+  chips: ['Brustschmerz', 'Atemnot', 'Kopfschmerz', 'Fieber', 'Sturz / Verletzung', 'Wunde'],
+  target: [5, 10, 30, 90, 120],
+  labels: ['Sofort', 'Sehr dringend', 'Dringend', 'Normal', 'Nicht dringend']
+}
+
+export function dict(lang) {
+  return lang === 'de' ? de : en
+}
