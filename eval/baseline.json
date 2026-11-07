@@ -1,0 +1,20 @@
+{
+  "_why_this_file_exists": "This is the committed 'known good' triage evaluation number. CI cannot regenerate it, because eval/run_eval.py drives the real pipeline and needs a live local Ollama server with mistral + nomic-embed-text pulled, which a hosted runner does not have. So this file is the reference point a human compares future manual runs against.",
+  "_never_auto_written_by_ci": "This file changes ONLY when a human deliberately re-runs `python eval/run_eval.py` and accepts the new number. The model samples and the number also drifts with the model and Ollama versions, so silently auto-accepting a fresh value in CI would turn real drift (or a genuine regression) into a rubber stamp. Update it by hand, in the same commit as the refreshed eval/results.md.",
+  "_how_to_update": "1) run `python eval/run_eval.py` locally (Ollama up), 2) read eval/results.md, 3) copy the overall accuracy and the P1 under-triage check here, 4) commit this file together with eval/results.md.",
+  "recorded_from": "eval/results.md",
+  "recorded_on": "2026-11-07",
+  "model": "mistral:latest",
+  "embeddings_model": "nomic-embed-text:latest",
+
+  "overall_accuracy": 0.85,
+  "overall_correct": 17,
+  "overall_total": 20,
+
+  "p1_under_triage": "PASS",
+  "p1_under_triage_hard_failures": 0,
+  "p1_recall": 1.0,
+
+  "retrieval_rule_in_top2": 19,
+  "retrieval_cases_with_known_rule": 20
+}

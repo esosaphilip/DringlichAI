@@ -20,7 +20,7 @@ The model proposes. The nurse decides.
 
 </div>
 
-<!-- CI badge placeholder -->
+[![CI](https://github.com/esosaphilip/DringlichAI/actions/workflows/ci.yml/badge.svg)](https://github.com/esosaphilip/DringlichAI/actions/workflows/ci.yml)
 
 ---
 
@@ -344,6 +344,10 @@ gross mis-triages, and the one real retrieval miss — the ambiguous long-durati
 is a *different* failure mode, where the correct rule never reached the model at all; that is
 exactly why the harness reports retrieval separately. And the model samples, so repeated runs land a
 few points either side of this number — treat it as an estimate, not a precise score.
+
+Fast tests run in CI on every push; the full LLM-based evaluation is re-run manually after any
+change that could affect triage quality, and its result is committed deliberately rather than
+auto-generated, since it depends on a local model this CI runner doesn't have.
 
 ## Testing
 

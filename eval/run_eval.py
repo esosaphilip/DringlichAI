@@ -20,7 +20,6 @@ Outputs a results table to stdout and writes the same to eval/results.md.
 import os
 import sys
 import uuid
-from collections import defaultdict
 
 # --- Make the harness runnable both as `python eval/run_eval.py` and `python -m eval.run_eval` ---
 # The script dir must be on the path for `golden_set`, and the repo root for `priority_analyzer_agent`.

@@ -1,0 +1,70 @@
+name: CI
+
+# Fast, deterministic checks on every push and pull request to main.
+#
+# WHY THE REAL EVALUATION IS *NOT* RUN HERE: eval/run_eval.py drives the live triage pipeline,
+# which needs a local Ollama server with `mistral` and `nomic-embed-text` pulled. A hosted runner
+# has neither, so running it here would be slow, brittle, and would need infrastructure the repo
+# deliberately does not depend on. The split used instead is the standard MLOps pattern: cheap
+# deterministic tests gate every commit, and the expensive model evaluation is an explicit,
+# reviewed action (see eval-manual.yml) whose result is committed by hand.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Lint + fast tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install \
+            fastapi "uvicorn[standard]" \
+            langgraph langchain-core langchain-ollama langchain-community \
+            langchain-chroma langchain-text-splitters chromadb pypdf \
+            pytest httpx ruff
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Run fast tests
+        # No LLM is needed here: the parsing and doctor-assignment tests are pure, and the
+        # safety-contract test self-skips when it cannot reach a local Ollama server.
+        run: pytest -v
+
+      - name: Check the evaluation baseline exists and is well-formed
+        # A reminder, not a quality gate. This only proves eval/baseline.json is readable JSON with
+        # the expected keys. It must still be REFRESHED BY HAND after any change to the prompt, the
+        # guideline PDF, or the retrieval settings — see the file's own notes for why.
+        run: |
+          python - <<'PY'
+          import json
+          import pathlib
+          import sys
+
+          path = pathlib.Path("eval/baseline.json")
+          if not path.exists():
+              sys.exit("eval/baseline.json is missing — the committed baseline was deleted.")
+
+          data = json.loads(path.read_text())
+          required = {"overall_accuracy", "p1_under_triage"}
+          missing = required - set(data)
+          if missing:
+              sys.exit(f"eval/baseline.json is missing required keys: {sorted(missing)}")
+
+          print("baseline.json is well-formed:")
+          print(json.dumps(data, indent=2))
+          PY

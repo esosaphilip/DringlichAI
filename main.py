@@ -27,7 +27,7 @@ def run_triage_system():
     current_state = graph.get_state(config)
     ai_priority = current_state.values.get("priority")
     
-    print(f"\n[HUMAN-IN-THE-LOOP CHECKPOINT]")
+    print("\n[HUMAN-IN-THE-LOOP CHECKPOINT]")
     print(f"Patient: {name}")
     print(f"AI Suggested Priority: P{ai_priority}")
     

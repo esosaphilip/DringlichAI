@@ -9,19 +9,42 @@ WHAT A FAILURE WOULD MEAN: if this ever fails, an AI suggestion reached the data
 human approval — the one failure mode the system exists to prevent. It is a hard, non-negotiable
 contract, so it is asserted against the database itself rather than the HTTP response body.
 
-It runs the real pipeline (retrieval + LLM), so Ollama must be running. The database is a temp
-copy, so the test can never corrupt real local data.
+It runs the real pipeline (retrieval + LLM), so it needs a live local Ollama server. Where one is
+present — a dev laptop, the manual evaluation workflow — it runs for real. On a plain CI runner,
+which has no model server, it self-skips rather than failing: a red pipeline caused only by the
+environment trains people to ignore the pipeline. The database is a temp copy, so the test can
+never corrupt real local data.
 """
 
 import os
 import shutil
 import sqlite3
+import urllib.request
 import uuid
 
 import pytest
 from fastapi.testclient import TestClient
 
 import api
+
+
+def _ollama_is_reachable() -> bool:
+    """True when a local Ollama server answers on its default port.
+
+    This test drives the real triage graph, which calls Ollama for embeddings and the LLM, so it
+    cannot run without one. Checking up front lets it be skipped honestly instead of erroring.
+    """
+    try:
+        with urllib.request.urlopen("http://localhost:11434/api/tags", timeout=1):
+            return True
+    except OSError:
+        return False
+
+
+pytestmark = pytest.mark.skipif(
+    not _ollama_is_reachable(),
+    reason="needs a live local Ollama server (mistral + nomic-embed-text); skipped in CI",
+)
 
 
 @pytest.fixture

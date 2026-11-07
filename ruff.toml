@@ -1,0 +1,15 @@
+# Ruff configuration for DringlichAI.
+#
+# WHY THIS EXISTS: CI lints on every push, so the ruleset has to be pinned in the repo rather than
+# inherited from whatever ruff version the runner happens to install — otherwise the same commit
+# can pass locally and fail in CI (or vice versa) purely because of a tool upgrade.
+#
+# The selected set is deliberately the classic flake8-equivalent one (pycodestyle import/statement
+# errors + pyflakes). It catches real problems — unused imports, undefined names, dead f-strings —
+# without demanding the modernisation rewrites (UP/SIM/RUF/import-sorting) that the existing triage
+# code predates. Those are worth doing, but as their own change, not folded into a CI-wiring commit.
+
+target-version = "py312"
+
+[lint]
+select = ["E4", "E7", "E9", "F"]
