@@ -27,7 +27,52 @@ vector_store = Chroma(
 )
 llm = ChatOllama(model="mistral:latest")
 
-# 3. Define the AI Node with Precise RAG and Regex Parsing
+# 3. Pure parsing helper — extracted from analyze_priority() so the fallback chain that turns
+#    a raw LLM string into structured fields can be unit-tested without a live model. This is the
+#    one piece of logic standing between a garbled model response and a silently wrong triage
+#    level, so it deserves to be testable on its own rather than only reachable through Ollama.
+def parse_triage_response(raw_text: str, fallback_guideline: str = "Triage guide") -> dict:
+    """Parses the model's PRIORITY/CONFIDENCE/GUIDELINE/REASON text into structured fields.
+
+    WHY THIS EXISTS: the raw LLM response is untrusted input — it can be perfectly formatted,
+    chatty, truncated, or complete nonsense — and it must always resolve to a usable
+    (priority, confidence, guideline, reasoning) tuple without crashing the request. Isolating
+    the parse here makes that resolution logic unit-testable off-line.
+
+    INTERVIEW TALKING POINT: the priority resolution walks a deliberate four-step fallback chain
+    (labelled `PRIORITY:` line -> a bare `P<n>` token -> any digit 1-5 -> a hard default of 3);
+    each step is strictly weaker than the last, and the final default of 3 is a documented,
+    tested safety-relevant choice rather than an accident.
+    """
+    # Priority: prefer the explicit `PRIORITY: Pn` line, then any `P<n>`, then a lone digit.
+    match = re.search(r'PRIORITY:\s*P?([1-5])', raw_text, re.IGNORECASE) \
+        or re.search(r'P([1-5])', raw_text, re.IGNORECASE)
+
+    if match:
+        suggested_priority = int(match.group(1))
+    else:
+        # Fallback if 'P' was missed, search for any standalone digit 1-5
+        fallback_match = re.search(r'[1-5]', raw_text)
+        suggested_priority = int(fallback_match.group()) if fallback_match else 3
+
+    conf_match = re.search(r'CONFIDENCE:\s*(\d{1,3})', raw_text, re.IGNORECASE)
+    confidence = int(conf_match.group(1)) if conf_match else 80
+    confidence = max(0, min(100, confidence))
+
+    guide_match = re.search(r'GUIDELINE:\s*(.+)', raw_text, re.IGNORECASE)
+    guideline = guide_match.group(1).strip() if guide_match else fallback_guideline
+
+    reason_match = re.search(r'REASON:\s*(.+)', raw_text, re.IGNORECASE)
+    reasoning = reason_match.group(1).strip() if reason_match else ""
+
+    return {
+        "priority": suggested_priority,
+        "confidence": confidence,
+        "guideline": guideline,
+        "reasoning": reasoning
+    }
+
+# 4. Define the AI Node with Precise RAG and Regex Parsing
 def analyze_priority(state: PatientState):
     """Searches the PDF triage rules using RAG, then extracts the P-level,
     confidence, matched guideline and a short clinical justification."""
@@ -68,26 +113,13 @@ def analyze_priority(state: PatientState):
     raw_text = response.content.strip()
     print(f"[AI Agent] Raw LLM Response: {raw_text}")
 
-    # PRECISE PARSING: prefer the labelled PRIORITY line, then look for 'P' + digit.
-    match = re.search(r'PRIORITY:\s*P?([1-5])', raw_text, re.IGNORECASE) \
-        or re.search(r'P([1-5])', raw_text, re.IGNORECASE)
-
-    if match:
-        suggested_priority = int(match.group(1))
-    else:
-        # Fallback if 'P' was missed, search for any standalone digit 1-5
-        fallback_match = re.search(r'[1-5]', raw_text)
-        suggested_priority = int(fallback_match.group()) if fallback_match else 3
-
-    conf_match = re.search(r'CONFIDENCE:\s*(\d{1,3})', raw_text, re.IGNORECASE)
-    confidence = int(conf_match.group(1)) if conf_match else 80
-    confidence = max(0, min(100, confidence))
-
-    guide_match = re.search(r'GUIDELINE:\s*(.+)', raw_text, re.IGNORECASE)
-    guideline = guide_match.group(1).strip() if guide_match else fallback_guideline
-
-    reason_match = re.search(r'REASON:\s*(.+)', raw_text, re.IGNORECASE)
-    reasoning = reason_match.group(1).strip() if reason_match else ""
+    # Parsing is delegated to a pure function so this fallback chain can be unit-tested without
+    # Ollama; the end-to-end behavior is unchanged.
+    parsed = parse_triage_response(raw_text, fallback_guideline=fallback_guideline)
+    suggested_priority = parsed["priority"]
+    confidence = parsed["confidence"]
+    guideline = parsed["guideline"]
+    reasoning = parsed["reasoning"]
 
     print(f"[AI Agent] Correctly Assigned Priority: P{suggested_priority} "
           f"(confidence {confidence} %, guideline: {guideline})")
@@ -119,3 +151,5 @@ graph = workflow.compile(
     checkpointer=memory, 
     interrupt_before=["save_to_database"]
 )
+
+
