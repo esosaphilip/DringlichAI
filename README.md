@@ -20,6 +20,8 @@ The model proposes. The nurse decides.
 
 </div>
 
+<!-- CI badge placeholder -->
+
 ---
 
 ## The problem
@@ -235,7 +237,7 @@ source .venv/bin/activate
 
 pip install fastapi "uvicorn[standard]" langgraph langchain-core \
   langchain-ollama langchain-community langchain-chroma \
-  langchain-text-splitters chromadb pypdf
+  langchain-text-splitters chromadb pypdf pytest
 
 ollama pull mistral
 ollama pull nomic-embed-text
@@ -293,6 +295,12 @@ dringlichAI/
 ├── priority_analyzer_agent.py   # LangGraph RAG triage graph (the AI)
 ├── triagestore.py               # one-off: embeds the guideline PDF into Chroma
 ├── main.py                      # CLI-only triage demo, no UI
+├── conftest.py                  # puts the app root on sys.path so pytest can import the modules
+├── eval/                        # triage accuracy + safety evaluation harness
+│   ├── golden_set.py            # fixed 20-case golden set (+ one no-match case)
+│   ├── run_eval.py              # runs the real pipeline and writes results.md
+│   └── results.md               # latest measured results
+├── tests/                       # pytest: output parsing · safety contract · doctor assignment
 ├── DringlichAI_Mock_Triage_Guide.pdf
 ├── frontend/
 │   ├── src/
@@ -305,6 +313,61 @@ dringlichAI/
 │   └── package.json
 └── docs/media/                  # README screenshots and walkthrough
 ```
+
+## Evaluation
+
+The triage pipeline is measured against a fixed golden set: **20 cases derived from the real
+guideline's discriminators**, covering all five presentation categories (chest pain, shortness of
+breath, headache, abdominal pain, wounds), with a deliberate mix of easy and ambiguous cases plus
+one deliberately unmatched case studied on its own. Under-triaging a true P1 is the one failure the
+system cannot tolerate, so **P1 under-triage is tracked as a separate, zero-tolerance check** and
+never folded into the headline accuracy number, where it would simply be averaged away.
+
+Latest run against the real pipeline (`mistral:latest`, no mocks):
+
+| Metric | Result |
+|---|---|
+| Overall exact-match accuracy | 17/20 = **85.0%** |
+| P1 recall (safety-critical) | **1.00** (6/6) |
+| P1 under-triage — zero-tolerance check | **PASS** (0 hard failures) |
+| Matching rule retrieved in the top-2 chunks | 19/20 |
+
+The full per-case table, per-class precision/recall and the no-match observation live in
+[eval/results.md](eval/results.md). Reproduce them with:
+
+```bash
+python eval/run_eval.py     # requires Ollama running locally
+```
+
+Two honest caveats. The three misses are all single-level errors (P3→P2, P4→P2, P2→P1) rather than
+gross mis-triages, and the one real retrieval miss — the ambiguous long-duration chest-ache case —
+is a *different* failure mode, where the correct rule never reached the model at all; that is
+exactly why the harness reports retrieval separately. And the model samples, so repeated runs land a
+few points either side of this number — treat it as an estimate, not a precise score.
+
+## Testing
+
+```bash
+pytest
+```
+
+Three suites. The first two run offline; the contract test exercises the real pipeline (Ollama
+required):
+
+- [test_output_parsing.py](tests/test_output_parsing.py) — unit-tests `parse_triage_response()`, the
+  code that turns the untrusted raw model string into a priority. Covers the happy path, a missing
+  line, a chatty response and a fully garbled response, pinning down the documented fallback to
+  priority 3.
+- [test_safety_contract.py](tests/test_safety_contract.py) — **proves the human-in-the-loop claim**:
+  it calls `POST /triage` and then queries the `patients` table directly to assert nothing was
+  written. That guarantee used to exist only in prose; now it is a hard assertion against the
+  database.
+- [test_doctor_assignment.py](tests/test_doctor_assignment.py) — the least-loaded-doctor rule: empty
+  roster, a single doctor, the tie-break, off-duty exclusion, and the off-duty patient rebalance
+  through the real endpoint.
+
+Not covered yet: **all frontend logic** (no JS tests), and the model's clinical judgement is
+measured statistically by the evaluation harness rather than asserted case-by-case in unit tests.
 
 ## Roadmap
 
@@ -329,8 +392,17 @@ This is a demonstration project, not a medical device.
   illustrative and must never be trusted clinically.
 - **Mock guideline** — the triage guide PDF is synthetic, so the retrieved rules and the
   `CP-01`-style rule IDs are fabricated for the demo.
-- **Not validated** — no clinical validation, no test suite yet, and `practice/` and `.env` are
-  excluded from version control.
+- **Unparseable model output defaults to priority 3** rather than erring toward urgency or flagging
+  for manual review — tested and documented in
+  [test_output_parsing.py](tests/test_output_parsing.py), not yet fixed.
+- **Ticket numbering has no locking** — `_next_ticket` reads the highest ticket then writes the
+  next one without a transaction guard, so two simultaneous approvals could in theory land on the
+  same `A-nnn` number.
+- **Doctor tie-break is implicit** — when two doctors are equally loaded, the least-loaded rule
+  resolves by whatever order SQLite returns rows in (currently insertion order), with no explicit
+  ordering; documented by a test in [test_doctor_assignment.py](tests/test_doctor_assignment.py).
+- **Not clinically validated** — the evaluation measures agreement with a synthetic guideline, not
+  clinical correctness, and `practice/` and `.env` are excluded from version control.
 
 ## Author
 
